@@ -4,27 +4,26 @@ import cv2
 from matplotlib import pyplot as plt
 from disparity import *
 from skimage import io
+from disparity import *
+from depth import *
 
-def compute_depth(calib_file, disparity):
-    file = open(calib_file, 'r')
-    lines =file.read().split('\n')
-    p = {}
-    for line in lines:
-        if line:
-            points = line.split(' ')
-            p[points[0].strip(':')] = points[1:]
-        
-    f = float(p['P1'][0])
-    T = -float(p['P1'][3])/f
-    px = float(p['P1'][2])
-    py = float(p['P1'][6])
-    depth = np.divide(f*T,disparity,where=disparity!=0)
-    # depth = (depth).astype(np.uint8)
-    return f,T,px,py,depth
+def compute_3d(depth, px, py, f):
+    [M, N] = depth.shape
+    image_3d = np.zeros((M,N,3))
 
+    x_2d = np.zeros((M,N))
+    y_2d = np.zeros((M,N))
+
+    x_3d = (x_2d - px) * depth / f
+    y_3d = (y_2d - py) * depth / f
+
+    image_3d[:,:,0] = x_3d
+    image_3d[:,:,1] = y_3d
+    image_3d[:,:,2] = depth
+
+    return image_3d
 
 if __name__ == "__main__":
-    # choose two stereo images
     im_left_path = "train/image_left/um_000000.jpg"
     im_right_path = "train/image_right/um_000000.jpg"
     # read images
@@ -40,7 +39,6 @@ if __name__ == "__main__":
 
     calib_file_dir = 'train/calib/um_000000.txt'
     f,T,px,py,depth = compute_depth(calib_file_dir, disparity)
-    # plot depth map
-    fig=plt.figure(figsize=(10, 10))
-    plt.imshow(depth)
-    plt.show()
+
+    location_3d = compute_3d(depth, px, py, f)
+    print(location_3d)
