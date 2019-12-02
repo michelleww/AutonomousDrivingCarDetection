@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 def create_output_directory():
     sub_dir = ['30', '60', '90', '120', '150', '180', '210', '240', '270', '300', '330', '360']
     for i in sub_dir:
-        test_path = 'angel_classification/' + i
+        test_path = 'angle_classification/' + i
         pathlib.Path(test_path).mkdir(parents=True, exist_ok=True) 
 
 def get_car_segmentation(input_img_path):
@@ -39,40 +39,40 @@ def get_car_segmentation(input_img_path):
                 xleft, ytop, width, height = int(round(box[0])), int(round(box[1])), int(round(box[2])), int(round(box[3]))
                 segment = img[ytop:(ytop+height+1), xleft:(xleft+width+1), :]
                 if 0 <= angle <= 30:
-                    cv2.imwrite('./angel_classification/30/{}_{}_{}.jpg'.format(filename, angle, acc_30), segment)
+                    cv2.imwrite('./angle_classification/30/{}_{}_{}.jpg'.format(filename, 30, acc_30), segment)
                     acc_30 += 1
                 elif 30 < angle <= 60:
-                    cv2.imwrite('./angel_classification/60/{}_{}_{}.jpg'.format(filename, angle, acc_60), segment)
+                    cv2.imwrite('./angle_classification/60/{}_{}_{}.jpg'.format(filename, 60, acc_60), segment)
                     acc_60 += 1
                 elif 60 < angle <= 90:
-                    cv2.imwrite('./angel_classification/90/{}_{}_{}.jpg'.format(filename, angle, acc_90), segment)
+                    cv2.imwrite('./angle_classification/90/{}_{}_{}.jpg'.format(filename, 90, acc_90), segment)
                     acc_90 += 1
                 elif 90 < angle <= 120:
-                    cv2.imwrite('./angel_classification/120/{}_{}_{}.jpg'.format(filename, angle, acc_120), segment)
+                    cv2.imwrite('./angle_classification/120/{}_{}_{}.jpg'.format(filename, 120, acc_120), segment)
                     acc_120 += 1
                 elif 120 < angle <= 150:
-                    cv2.imwrite('./angel_classification/150/{}_{}_{}.jpg'.format(filename, angle, acc_150), segment)
+                    cv2.imwrite('./angle_classification/150/{}_{}_{}.jpg'.format(filename, 150, acc_150), segment)
                     acc_150 += 1
                 elif 150 < angle <= 180:
-                    cv2.imwrite('./angel_classification/180/{}_{}_{}.jpg'.format(filename, angle, acc_180), segment)
+                    cv2.imwrite('./angle_classification/180/{}_{}_{}.jpg'.format(filename, 180, acc_180), segment)
                     acc_180 += 1
                 elif 180 < angle <=210:
-                    cv2.imwrite('./angel_classification/210/{}_{}_{}.jpg'.format(filename, angle, acc_210), segment)
+                    cv2.imwrite('./angle_classification/210/{}_{}_{}.jpg'.format(filename, 210, acc_210), segment)
                     acc_210 += 1
                 elif 210 < angle <=240:
-                    cv2.imwrite('./angel_classification/240/{}_{}_{}.jpg'.format(filename, angle, acc_240), segment)
+                    cv2.imwrite('./angle_classification/240/{}_{}_{}.jpg'.format(filename, 240, acc_240), segment)
                     acc_240 += 1
                 elif 240 < angle <= 270:
-                    cv2.imwrite('./angel_classification/270/{}_{}_{}.jpg'.format(filename, angle, acc_270), segment)
+                    cv2.imwrite('./angle_classification/270/{}_{}_{}.jpg'.format(filename, 270, acc_270), segment)
                     acc_270 += 1
                 elif 270 < angle <= 300:
-                    cv2.imwrite('./angel_classification/300/{}_{}_{}.png'.format(filename, angle, acc_300), segment)
+                    cv2.imwrite('./angle_classification/300/{}_{}_{}.jpg'.format(filename, 300, acc_300), segment)
                     acc_300 += 1
                 elif 300 < angle <= 330:
-                    cv2.imwrite('./angel_classification/330/{}_{}_{}.png'.format(filename, angle, acc_330), segment)
+                    cv2.imwrite('./angle_classification/330/{}_{}_{}.jpg'.format(filename, 330, acc_330), segment)
                     acc_330 += 1                
                 elif 330 < angle <= 360:
-                    cv2.imwrite('./angel_classification/360/{}_{}_{}.png'.format(filename, angle, acc_360), segment)
+                    cv2.imwrite('./angle_classification/360/{}_{}_{}.jpg'.format(filename, 360, acc_360), segment)
                     acc_360 += 1
 
 def get_files(path):
