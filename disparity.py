@@ -13,13 +13,17 @@ if __name__ == "__main__":
     # read two stereo images
     im_left_path = "train/image_left/um_000000.jpg"
     im_left = plt.imread(im_left_path)
-    plt.imshow(im_left)
+    #plt.imshow(im_left)
+    #plt.show()
     im_right_path = "train/image_right/um_000000.jpg"
     im_right = plt.imread(im_right_path,0)
+    #plt.imshow(im_right)
+    #plt.imshow()
     # compute disparity
     d = disparity(im_left, im_right)
     # show the disparity map
     plt.imshow(d)
+    plt.show()
     
 
 
