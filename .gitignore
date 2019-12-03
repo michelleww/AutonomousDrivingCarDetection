@@ -2,3 +2,6 @@
 *.iml
 *.xml
 *.pyc
+*.jpg
+*.mat
+*.pkl
