@@ -5,13 +5,12 @@ from matplotlib import pyplot as plt
 from skimage.segmentation import slic
 from skimage.measure import perimeter
 import os
-from sklearn.svm import LinearSVC
-from sklearn.svm import SVC
 import joblib
 import mahotas as mt
 import matplotlib.colors as mcolors
 import webcolors
 from compute3d import get_3d_locations
+from sklearn.ensemble import RandomForestClassifier
 
 def extract_feature(image, image_gt, image_right, calib_path):
     # calculate image gradient using sobel
@@ -184,17 +183,15 @@ def extract_trainings():
     print('Data Successfully Saved!')
     return data_features, data_labels
 
-def train(data, labels, svm_path):
-    # print(np.where(np.isnan(data)))
-    # print(data[85])
-    # data = np.nan_to_num(data)
+def train(data, labels, model_path):
     X_train, y_train = data,labels
     print('Start Training process...')
-    svm = LinearSVC(random_state=0, dual= False, multi_class='ovr', class_weight = 'balanced', max_iter= 10000, C= 100.0, tol=1e-5)
-    svm.fit(X_train, y_train)
-    print('The accuracy is: ' + str(svm.score(X_train, y_train)))
-    joblib.dump(svm, svm_path)
+    model = RandomForestClassifier(min_samples_leaf=20)    
+    model.fit(X_train, y_train)
+    print('The accuracy is: ' + str(model.score(X_train, y_train)))
+    joblib.dump(model, model_path)
     print('Done training!')
+    return model
 
 def test_single_data(image_path):
     data, labels = [], []
@@ -209,12 +206,15 @@ def test_single_data(image_path):
     calib_path = image_path.replace('image_left', 'calib').replace('.jpg', '.txt')
     test_data, img_seg = extract_test_feature(image, image_right, calib_path)
 
-    train(data, labels, 'road_detection_svm_lsvc.pkl')
+    test_data = np.array(test_data).astype('float32')
+    test_data = np.nan_to_num(test_data)
 
-    svm = joblib.load('road_detection_svm_lsvc.pkl')
- 
-    # evaluate loaded model on test data
-    predictions = svm.predict(test_data)
+    data = data.astype('float32')
+    data = np.nan_to_num(data)
+
+    model = train(data, labels, 'road_detection_RF.pkl')
+
+    predictions = model.predict(test_data)
 
     return predictions, img_seg
 
