@@ -11,6 +11,9 @@ import matplotlib.colors as mcolors
 import webcolors
 from compute3d import get_3d_locations
 from sklearn.ensemble import RandomForestClassifier
+from skimage.color import rgb2lab, lab2rgb
+import copy
+from skimage import feature
 
 def extract_feature(image, image_gt, image_right, calib_path):
     # calculate image gradient using sobel
@@ -18,11 +21,14 @@ def extract_feature(image, image_gt, image_right, calib_path):
     sobelx = cv2.Sobel(image_gray,cv2.CV_64F,1,0,ksize=5)
     sobely = cv2.Sobel(image_gray,cv2.CV_64F,0,1,ksize=5)
 
+    image_lab = rgb2lab(copy.deepcopy(image)/255)
+    image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
     # compute 3D locations
     locations_3D = get_3d_locations(image, image_right, calib_path)
 
-    # super pixels for approximatly 1000 size
-    img_seg = slic(image, n_segments = 1000, compactness=8, convert2lab=True, min_size_factor=0.3)
+    # super pixels for approximatly 1100 size
+    img_seg = slic(image, n_segments = 1100, compactness=8, convert2lab=True, min_size_factor=0.3)
     # actual total number of labels
     num_labels = np.amax(img_seg)+1
 
@@ -36,43 +42,57 @@ def extract_feature(image, image_gt, image_right, calib_path):
         seg_center_x = np.mean(roi_idx[0])
         seg_center_y = np.mean(roi_idx[1])
 
-        seg_size = np.shape(roi_idx)[1]
+        # seg_sobel_x = sobelx[roi]
+        # seg_sobel_y = sobely[roi]
 
-        seg_perimeter = perimeter(roi)
+        # magnitude_mean = np.mean(np.sqrt(seg_sobel_x ** 2 + seg_sobel_y ** 2))
 
-        seg_sobel_x = sobelx[roi]
-        seg_sobel_y = sobely[roi]
+        # direction_mean = np.mean(np.arctan2(np.absolute(seg_sobel_y), np.absolute(seg_sobel_x)))
 
-        magnitude_mean = np.mean(np.sqrt(seg_sobel_x ** 2 + seg_sobel_y ** 2))
-
-        direction_mean = np.mean(np.arctan2(np.absolute(seg_sobel_y), np.absolute(seg_sobel_x)))
-
-        # add computed 2 D features
-        features.extend([seg_size, seg_perimeter, np.mean(seg_sobel_x), np.mean(seg_sobel_y), magnitude_mean, direction_mean])
+        # # add computed 2 D features
+        # features.extend([np.mean(seg_sobel_x), np.mean(seg_sobel_y), magnitude_mean, direction_mean])
         
         # extract color features  and 3D feature
         x, y, z = 0, 0, 0
         flag = True
+        rgb_mean = []
+        lab_mean = []
+        hsv_mean = []
+        size = len(roi_idx[0])
+
         for channel in range(3):
-            sum = 0
-            for idx in range(len(roi_idx[0])):
+            sum_rgb = 0
+            sum_lab = 0
+            sum_hsv = 0
+            for idx in range(size):
                 i = roi_idx[0][idx]
                 j = roi_idx[1][idx]
-                sum += image[i, j, channel]
+                sum_rgb += image[i, j, channel]
+                sum_lab += image_lab[i,j,channel]
+                sum_hsv += image_hsv[i,j,channel]
                 if flag:
-                    if idx == len(roi_idx[0]) - 1:
+                    if idx == size - 1:
                         flag = False
                     item_idx = image.shape[1] * i + j
                     x += locations_3D[item_idx, 0]
                     y += locations_3D[item_idx, 1]
                     z += locations_3D[item_idx, 2]
-            features.append(sum/len(roi_idx[0]))
-        features.extend([x/len(roi_idx[0]), y/len(roi_idx[0]), z/len(roi_idx[0])])
+            rgb_mean.append(sum_rgb/size)
+            lab_mean.append(sum_lab/size)
+            hsv_mean.append(sum_hsv/size)        
+        features.extend(rgb_mean)
+        features.extend(lab_mean)
+        features.extend(hsv_mean)
+        features.extend([x/size, y/size, z/size])
 
-        # add texture feature     
-        seg_rgb = image[roi]
-        textures = mt.features.haralick(seg_rgb)
-        features.extend(textures.mean(axis=0))
+        # add local binary pattern
+        seg_gray = image_gray*roi
+        LBP = local_binary_pattern(seg_gray)
+        features.extend(LBP)
+
+        # add texture feature  
+        textures = mt.features.haralick(seg_gray)
+        features.append(np.mean(textures))
 
         # adding lable
         if image_gt[int(seg_center_x),int(seg_center_y),2] > 0:
@@ -90,11 +110,14 @@ def extract_test_feature(image, image_right, calib_path):
     sobelx = cv2.Sobel(image_gray,cv2.CV_64F,1,0,ksize=5)
     sobely = cv2.Sobel(image_gray,cv2.CV_64F,0,1,ksize=5)
 
+    image_lab = rgb2lab(copy.deepcopy(image)/255)
+    image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
     # compute 3D locations
     locations_3D = get_3d_locations(image, image_right, calib_path)
 
-    # super pixels for approximatly 1000 size
-    img_seg = slic(image, n_segments = 1000, compactness=8, convert2lab=True, min_size_factor=0.3)
+    # super pixels for approximatly 1100 size
+    img_seg = slic(image, n_segments = 1100, compactness=8, convert2lab=True, min_size_factor=0.3)
     # actual total number of labels
     num_labels = np.amax(img_seg)+1
 
@@ -104,42 +127,56 @@ def extract_test_feature(image, image_right, calib_path):
         roi = (img_seg == label)
         roi_idx = np.nonzero(roi)
 
-        seg_size = np.shape(roi_idx)[1]
+        # seg_sobel_x = sobelx[roi]
+        # seg_sobel_y = sobely[roi]
+        # magnitude_mean = np.mean(np.sqrt(seg_sobel_x ** 2 + seg_sobel_y ** 2))
 
-        seg_perimeter = perimeter(roi)
+        # direction_mean = np.mean(np.arctan2(np.absolute(seg_sobel_y), np.absolute(seg_sobel_x)))
 
-        seg_sobel_x = sobelx[roi]
-        seg_sobel_y = sobely[roi]
-        magnitude_mean = np.mean(np.sqrt(seg_sobel_x ** 2 + seg_sobel_y ** 2))
-
-        direction_mean = np.mean(np.arctan2(np.absolute(seg_sobel_y), np.absolute(seg_sobel_x)))
-
-        # add computed 2 D features
-        features.extend([seg_size, seg_perimeter, np.mean(seg_sobel_x), np.mean(seg_sobel_y), magnitude_mean, direction_mean])
+        # # add computed 2 D features
+        # features.extend([np.mean(seg_sobel_x), np.mean(seg_sobel_y), magnitude_mean, direction_mean])
 
         # extract color features  and 3D feature
         x, y, z = 0, 0, 0
         flag = True
+        rgb_mean = []
+        lab_mean = []
+        hsv_mean = []
+        size = len(roi_idx[0])
+
         for channel in range(3):
-            sum = 0
-            for idx in range(len(roi_idx[0])):
+            sum_rgb = 0
+            sum_lab = 0
+            sum_hsv = 0
+            for idx in range(size):
                 i = roi_idx[0][idx]
                 j = roi_idx[1][idx]
-                sum += image[i, j, channel]
+                sum_rgb += image[i, j, channel]
+                sum_lab += image_lab[i,j,channel]
+                sum_hsv += image_hsv[i,j,channel]
                 if flag:
-                    if idx == len(roi_idx[0]) - 1:
+                    if idx == size - 1:
                         flag = False
                     item_idx = image.shape[1] * i + j
                     x += locations_3D[item_idx, 0]
                     y += locations_3D[item_idx, 1]
                     z += locations_3D[item_idx, 2]
-            features.append(sum/len(roi_idx[0]))
-        features.extend([x/len(roi_idx[0]), y/len(roi_idx[0]), z/len(roi_idx[0])])
+            rgb_mean.append(sum_rgb/size)
+            lab_mean.append(sum_lab/size)
+            hsv_mean.append(sum_hsv/size)        
+        features.extend(rgb_mean)
+        features.extend(lab_mean)
+        features.extend(hsv_mean)
+        features.extend([x/size, y/size, z/size])
 
-        # add texture feature     
-        seg_rgb = image[roi]
-        textures = mt.features.haralick(seg_rgb)
-        features.extend(textures.mean(axis=0))
+        # add local binary pattern
+        seg_gray = image_gray*roi
+        LBP = local_binary_pattern(seg_gray)
+        features.extend(LBP)
+
+        # add texture feature   
+        textures = mt.features.haralick(seg_gray)
+        features.append(np.mean(textures))
 
         features_list.append(features)
 
@@ -186,7 +223,7 @@ def extract_trainings():
 def train(data, labels, model_path):
     X_train, y_train = data,labels
     print('Start Training process...')
-    model = RandomForestClassifier(min_samples_leaf=20)    
+    model = RandomForestClassifier(n_estimators=100, criterion='entropy', min_samples_leaf=20)    
     model.fit(X_train, y_train)
     print('The accuracy is: ' + str(model.score(X_train, y_train)))
     joblib.dump(model, model_path)
@@ -206,12 +243,6 @@ def test_single_data(image_path):
     calib_path = image_path.replace('image_left', 'calib').replace('.jpg', '.txt')
     test_data, img_seg = extract_test_feature(image, image_right, calib_path)
 
-    test_data = np.array(test_data).astype('float32')
-    test_data = np.nan_to_num(test_data)
-
-    data = data.astype('float32')
-    data = np.nan_to_num(data)
-
     model = train(data, labels, 'road_detection_RF.pkl')
 
     predictions = model.predict(test_data)
@@ -226,6 +257,21 @@ def load_training_data():
     # Display Message
     print('Training Data Successfully Loaded!')
     return data, labels
+
+def local_binary_pattern(image, eps=1e-7):
+    # compute the Local Binary Pattern representation
+    # of the image, and then use the LBP representation
+    # to build the histogram of patterns
+
+    lbp = feature.local_binary_pattern(image, 28, 8, method='uniform')
+    (hist, _) = np.histogram(lbp.ravel(), bins=np.arange(0, 28 + 3), range=(0, 28 + 2))
+
+    # normalize the histogram
+    hist = hist.astype('float')
+    hist /= (hist.sum() + eps)
+
+    # return the histogram of Local Binary Patterns
+    return hist
 
 def get_segmentation(predictions, img, img_seg):
     num_labels = np.amax(img_seg)+1
@@ -278,8 +324,8 @@ def visualize_segementation(imgLeft, gt_mask):
     plt.show()
 
 if __name__ == '__main__':
-    test_path = 'test/image_left/umm_000061.jpg'
-    test = cv2.imread('test/image_left/umm_000061.jpg')
+    test_path = 'train/image_left/um_000001.jpg'
+    test = cv2.imread('train/image_left/um_000001.jpg')
     predictions, img_seg = test_single_data(test_path)
     gt_mask_1 = get_segmentation(predictions, test, img_seg)
     visualize_segementation(test, gt_mask_1)
