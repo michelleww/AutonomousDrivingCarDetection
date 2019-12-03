@@ -27,8 +27,6 @@ def extract_feature(image, image_gt, image_right, calib_path):
     # actual total number of labels
     num_labels = np.amax(img_seg)+1
 
-    bins = np.linspace(0,1,num=21)
-
     features_list = []
     labels = []
     for label in range(num_labels):
@@ -52,24 +50,30 @@ def extract_feature(image, image_gt, image_right, calib_path):
 
         # add computed 2 D features
         features.extend([seg_size, seg_perimeter, np.mean(seg_sobel_x), np.mean(seg_sobel_y), magnitude_mean, direction_mean])
-        # extract color features 
+        
+        # extract color features  and 3D feature
+        x, y, z = 0, 0, 0
+        flag = True
         for channel in range(3):
             sum = 0
             for idx in range(len(roi_idx[0])):
                 i = roi_idx[0][idx]
                 j = roi_idx[1][idx]
                 sum += image[i, j, channel]
+                if flag:
+                    if idx == len(roi_idx[0]) - 1:
+                        flag = False
+                    item_idx = image.shape[1] * i + j
+                    x += locations_3D[item_idx, 0]
+                    y += locations_3D[item_idx, 1]
+                    z += locations_3D[item_idx, 2]
             features.append(sum/len(roi_idx[0]))
+        features.extend([x/len(roi_idx[0]), y/len(roi_idx[0]), z/len(roi_idx[0])])
 
         # add texture feature     
         seg_rgb = image[roi]
         textures = mt.features.haralick(seg_rgb)
-        features.append(np.mean(textures))
-
-        # add 3d features 
-        seg_3d = locations_3D[roi]
-        means = np.mean(seg_3d, axis=0)
-        features.extend(means)
+        features.extend(textures.mean(axis=0))
 
         # adding lable
         if image_gt[int(seg_center_x),int(seg_center_y),2] > 0:
@@ -95,8 +99,6 @@ def extract_test_feature(image, image_right, calib_path):
     # actual total number of labels
     num_labels = np.amax(img_seg)+1
 
-    bins = np.linspace(0,1,num=21)
-
     features_list = []
     for label in range(num_labels):
         features = []
@@ -116,24 +118,29 @@ def extract_test_feature(image, image_right, calib_path):
         # add computed 2 D features
         features.extend([seg_size, seg_perimeter, np.mean(seg_sobel_x), np.mean(seg_sobel_y), magnitude_mean, direction_mean])
 
-        # extract color features 
+        # extract color features  and 3D feature
+        x, y, z = 0, 0, 0
+        flag = True
         for channel in range(3):
             sum = 0
             for idx in range(len(roi_idx[0])):
                 i = roi_idx[0][idx]
                 j = roi_idx[1][idx]
                 sum += image[i, j, channel]
-
+                if flag:
+                    if idx == len(roi_idx[0]) - 1:
+                        flag = False
+                    item_idx = image.shape[1] * i + j
+                    x += locations_3D[item_idx, 0]
+                    y += locations_3D[item_idx, 1]
+                    z += locations_3D[item_idx, 2]
             features.append(sum/len(roi_idx[0]))
+        features.extend([x/len(roi_idx[0]), y/len(roi_idx[0]), z/len(roi_idx[0])])
+
         # add texture feature     
         seg_rgb = image[roi]
         textures = mt.features.haralick(seg_rgb)
-        features.append(np.mean(textures))
-
-        # add 3d features 
-        seg_3d = locations_3D[roi]
-        means = np.mean(seg_3d, axis=0)
-        features.extend(means)
+        features.extend(textures.mean(axis=0))
 
         features_list.append(features)
 
@@ -178,9 +185,9 @@ def extract_trainings():
     return data_features, data_labels
 
 def train(data, labels, svm_path):
-    print(np.where(np.isnan(data)))
-    print(data[85])
-    data = np.nan_to_num(data)
+    # print(np.where(np.isnan(data)))
+    # print(data[85])
+    # data = np.nan_to_num(data)
     X_train, y_train = data,labels
     print('Start Training process...')
     svm = LinearSVC(random_state=0, dual= False, multi_class='ovr', class_weight = 'balanced', max_iter= 10000, C= 100.0, tol=1e-5)

@@ -28,8 +28,21 @@ def get_3d_locations(img_left, img_right, calib_path):
     im_right = cv2.cvtColor(img_right, cv2.COLOR_BGR2RGB)
     disparity = compute_disparity(img_left, img_right)
     f,T,px,py,depth = compute_depth(calib_path, disparity)
-    location_3d = compute_3d(depth, px, py, f)
-    return location_3d
+    
+    [M, N] = depth.shape
+    image_3d = np.zeros((M,N,3))
+
+    x_2d = np.zeros((M,N))
+    y_2d = np.zeros((M,N))
+
+    x_3d = (x_2d - px) * depth / f
+    y_3d = (y_2d - py) * depth / f
+
+    x = x_3d.flatten()
+    y = y_3d.flatten()
+    z = depth.flatten()
+    data = np.c_[x,y,z]
+    return data
 
 if __name__ == "__main__":
     im_left_path = "train/image_left/um_000000.jpg"
@@ -52,3 +65,5 @@ if __name__ == "__main__":
     print(location_3d)
     print(im_left.shape)
     print(location_3d.shape)
+    print(get_3d_locations(im_left, im_right, calib_file_dir).shape)
+    
