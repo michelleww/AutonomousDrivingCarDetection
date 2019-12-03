@@ -23,6 +23,14 @@ def compute_3d(depth, px, py, f):
 
     return image_3d
 
+def get_3d_locations(img_left, img_right, calib_path):
+    im_left = cv2.cvtColor(img_left, cv2.COLOR_BGR2RGB)
+    im_right = cv2.cvtColor(img_right, cv2.COLOR_BGR2RGB)
+    disparity = compute_disparity(img_left, img_right)
+    f,T,px,py,depth = compute_depth(calib_path, disparity)
+    location_3d = compute_3d(depth, px, py, f)
+    return location_3d
+
 if __name__ == "__main__":
     im_left_path = "train/image_left/um_000000.jpg"
     im_right_path = "train/image_right/um_000000.jpg"
@@ -42,3 +50,5 @@ if __name__ == "__main__":
 
     location_3d = compute_3d(depth, px, py, f)
     print(location_3d)
+    print(im_left.shape)
+    print(location_3d.shape)
