@@ -54,7 +54,8 @@ def object_detection_api(img_path, threshold=0.6, rect_th=1, text_size=0.7, text
         plt.yticks([])
         #plt.show()
         plt.savefig(".\\train\\results-dets\\"+img_path[-14:])
-        return boxes[i][0]
+        #print(boxes[i])
+        return boxes[i]
     except:
         print("No vehicle detected in: " + str(img_path))
         img = cv2.imread(img_path)
