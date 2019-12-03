@@ -64,7 +64,7 @@ def object_detection_api(img_path, threshold=0.6, rect_th=1, text_size=0.7, text
         plt.figure(figsize=(20,30))
         plt.imshow(img)
         plt.savefig(".\\train\\results-dets\\"+img_path[-14:])
-    print(result)
+    #print(result)
     return result
 
 
