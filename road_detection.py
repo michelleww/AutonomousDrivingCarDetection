@@ -230,7 +230,7 @@ def train(data, labels, model_path):
     print('Done training!')
     return model
 
-def test_single_data(image_path):
+def test_single_data(image_path, cali_path=None):
     data, labels = [], []
 
     if os.path.isfile('training_data_features.npy') and os.path.isfile('training_data_labels.npy'):
@@ -240,7 +240,8 @@ def test_single_data(image_path):
 
     image = cv2.imread(image_path)
     image_right = cv2.imread(image_path.replace('image_left', 'image_right'))
-    calib_path = image_path.replace('image_left', 'calib').replace('.jpg', '.txt')
+    if cali_path == None:
+        calib_path = image_path.replace('image_left', 'calib').replace('.jpg', '.txt')
     test_data, img_seg = extract_test_feature(image, image_right, calib_path)
 
     model = train(data, labels, 'road_detection_RF.pkl')
