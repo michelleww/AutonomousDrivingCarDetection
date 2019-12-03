@@ -39,8 +39,9 @@ def get_prediction(img_path, threshold):
 
 
 def object_detection_api(img_path, threshold=0.6, rect_th=1, text_size=0.7, text_th=1):
+    result = []
     try:
-        want_detect = ['car', 'bus', 'truck']
+        want_detect = ['car']
         boxes, pred_cls = get_prediction(img_path, threshold) # Get predictions
         img = cv2.imread(img_path) # Read image with cv2
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) # Convert to RGB
@@ -48,14 +49,14 @@ def object_detection_api(img_path, threshold=0.6, rect_th=1, text_size=0.7, text
             if pred_cls[i] in want_detect:
                 cv2.rectangle(img, boxes[i][0], boxes[i][1],color=(0, 255, 0), thickness=rect_th) # Draw Rectangle with the coordinates
                 cv2.putText(img,pred_cls[i], boxes[i][0],  cv2.FONT_HERSHEY_SIMPLEX, text_size, (0,255,0),thickness=text_th) # Write the prediction class
+                result.append(boxes[i])
         plt.figure(figsize=(20,30)) # display the output image
         plt.imshow(img)
         plt.xticks([])
         plt.yticks([])
         #plt.show()
         plt.savefig(".\\train\\results-dets\\"+img_path[-14:])
-        #print(boxes[i])
-        return boxes[i]
+        #print(boxess)
     except:
         print("No vehicle detected in: " + str(img_path))
         img = cv2.imread(img_path)
@@ -63,7 +64,9 @@ def object_detection_api(img_path, threshold=0.6, rect_th=1, text_size=0.7, text
         plt.figure(figsize=(20,30))
         plt.imshow(img)
         plt.savefig(".\\train\\results-dets\\"+img_path[-14:])
-        return None
+    print(result)
+    return result
+
 
 
 
