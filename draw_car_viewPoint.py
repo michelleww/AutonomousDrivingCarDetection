@@ -45,7 +45,7 @@ def draw_boxes_and_arrow(boxes, recursive_glob_path, img_path, svm_path):
     return img
 
 if __name__ == '__main__':
-    test_img = 'train_angle/image/000283.jpg'
+    test_img = 'train/image_left/um_000011.jpg'
     cars = object_detection_api(test_img)
     draw_boxes_and_arrow(cars, 'angle_classification/*/*.jpg', test_img, 'svm.pkl')
     # draw_box_and_arrow(corners_2, 'angle_classification/*/*.jpg', '000161.jpg', 'svm.pkl')
