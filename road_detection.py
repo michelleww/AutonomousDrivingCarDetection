@@ -11,12 +11,16 @@ import joblib
 import mahotas as mt
 import matplotlib.colors as mcolors
 import webcolors
+from compute3d import get_3d_locations
 
-def extract_feature(image, image_gt):
+def extract_feature(image, image_gt, image_right, calib_path):
     # calculate image gradient using sobel
     image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     sobelx = cv2.Sobel(image_gray,cv2.CV_64F,1,0,ksize=5)
     sobely = cv2.Sobel(image_gray,cv2.CV_64F,0,1,ksize=5)
+
+    # compute 3D locations
+    locations_3D = get_3d_locations(image, image_right, calib_path)
 
     # super pixels for approximatly 1000 size
     img_seg = slic(image, n_segments = 1000, compactness=8, convert2lab=True, min_size_factor=0.3)
@@ -60,7 +64,12 @@ def extract_feature(image, image_gt):
         # add texture feature     
         seg_rgb = image[roi]
         textures = mt.features.haralick(seg_rgb)
-        features.extend(textures.mean(axis=0))
+        features.append(np.mean(textures))
+
+        # add 3d features 
+        seg_3d = locations_3D[roi]
+        means = np.mean(seg_3d, axis=0)
+        features.extend(means)
 
         # adding lable
         if image_gt[int(seg_center_x),int(seg_center_y),2] > 0:
@@ -72,11 +81,14 @@ def extract_feature(image, image_gt):
 
     return features_list, labels
 
-def extract_test_feature(image):
+def extract_test_feature(image, image_right, calib_path):
     # calculate image gradient using sobel
     image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     sobelx = cv2.Sobel(image_gray,cv2.CV_64F,1,0,ksize=5)
     sobely = cv2.Sobel(image_gray,cv2.CV_64F,0,1,ksize=5)
+
+    # compute 3D locations
+    locations_3D = get_3d_locations(image, image_right, calib_path)
 
     # super pixels for approximatly 1000 size
     img_seg = slic(image, n_segments = 1000, compactness=8, convert2lab=True, min_size_factor=0.3)
@@ -116,7 +128,13 @@ def extract_test_feature(image):
         # add texture feature     
         seg_rgb = image[roi]
         textures = mt.features.haralick(seg_rgb)
-        features.extend(textures.mean(axis=0))
+        features.append(np.mean(textures))
+
+        # add 3d features 
+        seg_3d = locations_3D[roi]
+        means = np.mean(seg_3d, axis=0)
+        features.extend(means)
+
         features_list.append(features)
 
     return features_list, img_seg
@@ -138,11 +156,14 @@ def extract_trainings():
         img_path = 'train/image_left/' + name
         img_gt_name = name.replace('_', '_road_', 1).replace('jpg', 'png')
         img_gt_path = 'train/gt_image_left/' + img_gt_name
+        img_right_path = 'train/image_right/' + name
+        calib_path= ('train/calib/'+ name).replace('jpg', 'txt')
 
         img = cv2.imread(img_path)
         img_gt = cv2.imread(img_gt_path)
+        img_right = cv2.imread(img_right_path)
 
-        features, labels= extract_feature(img, img_gt)
+        features, labels= extract_feature(img, img_gt, img_right, calib_path)
 
         # add features for a single image
         data_features.extend(features)
@@ -157,6 +178,9 @@ def extract_trainings():
     return data_features, data_labels
 
 def train(data, labels, svm_path):
+    print(np.where(np.isnan(data)))
+    print(data[85])
+    data = np.nan_to_num(data)
     X_train, y_train = data,labels
     print('Start Training process...')
     svm = LinearSVC(random_state=0, dual= False, multi_class='ovr', class_weight = 'balanced', max_iter= 10000, C= 100.0, tol=1e-5)
@@ -165,7 +189,7 @@ def train(data, labels, svm_path):
     joblib.dump(svm, svm_path)
     print('Done training!')
 
-def test_single_data(image):
+def test_single_data(image_path):
     data, labels = [], []
 
     if os.path.isfile('training_data_features.npy') and os.path.isfile('training_data_labels.npy'):
@@ -173,7 +197,11 @@ def test_single_data(image):
     else: 
         data, labels = extract_trainings()
 
-    test_data, img_seg = extract_test_feature(image)
+    image = cv2.imread(image_path)
+    image_right = cv2.imread(image_path.replace('image_left', 'image_right'))
+    calib_path = image_path.replace('image_left', 'calib').replace('.jpg', '.txt')
+    test_data, img_seg = extract_test_feature(image, image_right, calib_path)
+
     train(data, labels, 'road_detection_svm_lsvc.pkl')
 
     svm = joblib.load('road_detection_svm_lsvc.pkl')
@@ -243,7 +271,8 @@ def visualize_segementation(imgLeft, gt_mask):
     plt.show()
 
 if __name__ == '__main__':
+    test_path = 'test/image_left/umm_000061.jpg'
     test = cv2.imread('test/image_left/umm_000061.jpg')
-    predictions, img_seg = test_single_data(test)
+    predictions, img_seg = test_single_data(test_path)
     gt_mask_1 = get_segmentation(predictions, test, img_seg)
     visualize_segementation(test, gt_mask_1)
