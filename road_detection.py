@@ -14,6 +14,7 @@ from sklearn.ensemble import RandomForestClassifier
 from skimage.color import rgb2lab, lab2rgb
 import copy
 from skimage import feature
+from sklearn.model_selection import train_test_split
 
 def extract_feature(image, image_gt, image_right, calib_path):
     # calculate image gradient using sobel
@@ -27,8 +28,8 @@ def extract_feature(image, image_gt, image_right, calib_path):
     # compute 3D locations
     locations_3D = get_3d_locations(image, image_right, calib_path)
 
-    # super pixels for approximatly 1100 size
-    img_seg = slic(image, n_segments = 1100, compactness=8, convert2lab=True, min_size_factor=0.3)
+    # super pixels for approximatly 1200 size
+    img_seg = slic(image, n_segments = 1200, compactness=8, convert2lab=True, min_size_factor=0.3)
     # actual total number of labels
     num_labels = np.amax(img_seg)+1
 
@@ -42,15 +43,15 @@ def extract_feature(image, image_gt, image_right, calib_path):
         seg_center_x = np.mean(roi_idx[0])
         seg_center_y = np.mean(roi_idx[1])
 
-        # seg_sobel_x = sobelx[roi]
-        # seg_sobel_y = sobely[roi]
+        seg_sobel_x = sobelx[roi]
+        seg_sobel_y = sobely[roi]
 
-        # magnitude_mean = np.mean(np.sqrt(seg_sobel_x ** 2 + seg_sobel_y ** 2))
+        magnitude_mean = np.mean(np.sqrt(seg_sobel_x ** 2 + seg_sobel_y ** 2))
 
-        # direction_mean = np.mean(np.arctan2(np.absolute(seg_sobel_y), np.absolute(seg_sobel_x)))
+        direction_mean = np.mean(np.arctan2(np.absolute(seg_sobel_y), np.absolute(seg_sobel_x)))
 
-        # # add computed 2 D features
-        # features.extend([np.mean(seg_sobel_x), np.mean(seg_sobel_y), magnitude_mean, direction_mean])
+        # add computed 2 D features
+        features.extend([np.mean(seg_sobel_x), np.mean(seg_sobel_y), magnitude_mean, direction_mean])
         
         # extract color features  and 3D feature
         x, y, z = 0, 0, 0
@@ -59,7 +60,7 @@ def extract_feature(image, image_gt, image_right, calib_path):
         lab_mean = []
         hsv_mean = []
         size = len(roi_idx[0])
-
+        lable_sum = 0
         for channel in range(3):
             sum_rgb = 0
             sum_lab = 0
@@ -77,6 +78,8 @@ def extract_feature(image, image_gt, image_right, calib_path):
                     x += locations_3D[item_idx, 0]
                     y += locations_3D[item_idx, 1]
                     z += locations_3D[item_idx, 2]
+                    if image_gt[i,j,0] > 0:
+                        lable_sum+=1
             rgb_mean.append(sum_rgb/size)
             lab_mean.append(sum_lab/size)
             hsv_mean.append(sum_hsv/size)        
@@ -85,20 +88,14 @@ def extract_feature(image, image_gt, image_right, calib_path):
         features.extend(hsv_mean)
         features.extend([x/size, y/size, z/size])
 
-        # add local binary pattern
         seg_gray = image_gray*roi
-        LBP = local_binary_pattern(seg_gray)
-        features.extend(LBP)
 
         # add texture feature  
         textures = mt.features.haralick(seg_gray)
         features.append(np.mean(textures))
 
         # adding lable
-        if image_gt[int(seg_center_x),int(seg_center_y),2] > 0:
-            labels.append(1)
-        else:
-            labels.append(0)
+        labels.append(int(round(lable_sum/size)))
 
         features_list.append(features)
 
@@ -116,8 +113,8 @@ def extract_test_feature(image, image_right, calib_path):
     # compute 3D locations
     locations_3D = get_3d_locations(image, image_right, calib_path)
 
-    # super pixels for approximatly 1100 size
-    img_seg = slic(image, n_segments = 1100, compactness=8, convert2lab=True, min_size_factor=0.3)
+    # super pixels for approximatly 1200 size
+    img_seg = slic(image, n_segments = 1200, compactness=8, convert2lab=True, min_size_factor=0.3)
     # actual total number of labels
     num_labels = np.amax(img_seg)+1
 
@@ -127,14 +124,14 @@ def extract_test_feature(image, image_right, calib_path):
         roi = (img_seg == label)
         roi_idx = np.nonzero(roi)
 
-        # seg_sobel_x = sobelx[roi]
-        # seg_sobel_y = sobely[roi]
-        # magnitude_mean = np.mean(np.sqrt(seg_sobel_x ** 2 + seg_sobel_y ** 2))
+        seg_sobel_x = sobelx[roi]
+        seg_sobel_y = sobely[roi]
+        magnitude_mean = np.mean(np.sqrt(seg_sobel_x ** 2 + seg_sobel_y ** 2))
 
-        # direction_mean = np.mean(np.arctan2(np.absolute(seg_sobel_y), np.absolute(seg_sobel_x)))
+        direction_mean = np.mean(np.arctan2(np.absolute(seg_sobel_y), np.absolute(seg_sobel_x)))
 
-        # # add computed 2 D features
-        # features.extend([np.mean(seg_sobel_x), np.mean(seg_sobel_y), magnitude_mean, direction_mean])
+        # add computed 2 D features
+        features.extend([np.mean(seg_sobel_x), np.mean(seg_sobel_y), magnitude_mean, direction_mean])
 
         # extract color features  and 3D feature
         x, y, z = 0, 0, 0
@@ -169,11 +166,7 @@ def extract_test_feature(image, image_right, calib_path):
         features.extend(hsv_mean)
         features.extend([x/size, y/size, z/size])
 
-        # add local binary pattern
         seg_gray = image_gray*roi
-        LBP = local_binary_pattern(seg_gray)
-        features.extend(LBP)
-
         # add texture feature   
         textures = mt.features.haralick(seg_gray)
         features.append(np.mean(textures))
@@ -213,21 +206,25 @@ def extract_trainings():
         data_labels.extend(labels)
 
     # Output Data to file
-    np.save('training_data_features', data_features)
-    np.save('training_data_labels', data_labels)
+    np.save('training_data_features_2', data_features)
+    np.save('training_data_labels_2', data_labels)
 
     # Display Message
     print('Data Successfully Saved!')
     return data_features, data_labels
 
 def train(data, labels, model_path):
-    X_train, y_train = data,labels
+    X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.25, random_state=42)
+
     print('Start Training process...')
-    model = RandomForestClassifier(n_estimators=100, criterion='entropy', min_samples_leaf=20)    
+    
+    model = RandomForestClassifier(n_estimators=330, criterion='entropy', min_samples_leaf=3, min_samples_split=8)  
     model.fit(X_train, y_train)
-    print('The accuracy is: ' + str(model.score(X_train, y_train)))
+    print('The training accuracy is: ' + str(model.score(X_train, y_train)))
     joblib.dump(model, model_path)
     print('Done training!')
+
+    print('The testing accuracy is: ' + str(model.score(X_test, y_test)))
     return model
 
 def test_single_data(image_path, cali_path=None):
@@ -258,21 +255,6 @@ def load_training_data():
     # Display Message
     print('Training Data Successfully Loaded!')
     return data, labels
-
-def local_binary_pattern(image, eps=1e-7):
-    # compute the Local Binary Pattern representation
-    # of the image, and then use the LBP representation
-    # to build the histogram of patterns
-
-    lbp = feature.local_binary_pattern(image, 28, 8, method='uniform')
-    (hist, _) = np.histogram(lbp.ravel(), bins=np.arange(0, 28 + 3), range=(0, 28 + 2))
-
-    # normalize the histogram
-    hist = hist.astype('float')
-    hist /= (hist.sum() + eps)
-
-    # return the histogram of Local Binary Patterns
-    return hist
 
 def get_segmentation(predictions, img, img_seg):
     num_labels = np.amax(img_seg)+1
