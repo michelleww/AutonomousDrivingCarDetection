@@ -32,15 +32,15 @@ def draw_boxes_and_arrow(boxes, recursive_glob_path, img_path, svm_path):
 
         center_point_x = (right + left)/2
         center_point_y = (bottom + top)/2
-        length  = (bottom - top)/2 - 2
+        length  = (bottom - top)/2 + 15
         p2_x =  int(round(center_point_x + length * math.cos(angle * np.pi / 180.0)))
         p2_y =  int(round(center_point_y + length * math.sin(angle * np.pi / 180.0)))
 
         # Draw Rectangle with the coordinates and put detection class on the left top cornor
         cv2.rectangle(img, box[0], box[1],color=(0, 255, 0), thickness=1)
-        cv2.putText(img,'Car', box[0],  cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0),thickness=1)
-        cv2.arrowedLine(img, (int(center_point_x), int(center_point_y)), (p2_x, p2_y), (0,0,255), thickness=2)
-        cv2.putText(img,str(angle), (int(center_point_x), int(center_point_y)),  cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,255),thickness=1)
+        cv2.putText(img,'Car', box[0],  cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0),thickness=2)
+        cv2.arrowedLine(img, (int(center_point_x), int(center_point_y)), (p2_x, p2_y), (210, 142, 40), thickness=3)
+        cv2.putText(img,str(angle), (int(center_point_x), int(center_point_y)),  cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,255),thickness=2)
     cv2.imwrite('./detected_car/results-dets/' + test_img[(test_img.index('/u')+1):], img)
     return img
 
