@@ -23,26 +23,35 @@ def compute_3d(depth, px, py, f):
 
     return image_3d
 
-def get_3d_locations(img_left, img_right, calib_path):
-    im_left = cv2.cvtColor(img_left, cv2.COLOR_BGR2RGB)
-    im_right = cv2.cvtColor(img_right, cv2.COLOR_BGR2RGB)
-    disparity = compute_disparity(img_left, img_right)
-    f,T,px,py,depth = compute_depth(calib_path, disparity)
-    
+def compute_3d_2(depth, px, py, f):
     [M, N] = depth.shape
     image_3d = np.zeros((M,N,3))
+    for i in range(M):
+        for j in range(N):
+            Z = depth[i,j]
+            image_3d[i,j] = [(i-py)*Z/f, (j-px)*Z/f, Z]
 
-    x_2d = np.zeros((M,N))
-    y_2d = np.zeros((M,N))
+    return image_3d
 
-    x_3d = (x_2d - px) * depth / f
-    y_3d = (y_2d - py) * depth / f
 
-    x = x_3d.flatten()
-    y = y_3d.flatten()
-    z = depth.flatten()
-    data = np.c_[x,y,z]
-    return data
+def get_3d_locations(img_left, img_right, calib_path):
+    img_left_gray = cv2.cvtColor(img_left, cv2.COLOR_BGR2GRAY)
+    img_right_gray = cv2.cvtColor(img_right, cv2.COLOR_BGR2GRAY)
+    disparity = compute_disparity(img_left_gray, img_right_gray)
+    f,T,px,py,depth = compute_depth(calib_path, disparity)
+    
+    height, width = depth.shape
+    image_3d = []
+
+    for i in range(height):
+        for j in range(width):
+            Z = depth[i,j]
+            Z = Z
+            # print(Z)
+            image_3d.append([(i-py)*Z/f, (j-px)*Z/f, Z])
+            # image_3d.append([(j-px)*Z/f, (i-pi)*Z/f, Z])
+
+    return image_3d
 
 if __name__ == "__main__":
     im_left_path = "train/image_left/um_000000.jpg"
@@ -61,9 +70,10 @@ if __name__ == "__main__":
     calib_file_dir = 'train/calib/um_000000.txt'
     f,T,px,py,depth = compute_depth(calib_file_dir, disparity)
 
-    location_3d = compute_3d(depth, px, py, f)
-    print(location_3d)
-    print(im_left.shape)
-    print(location_3d.shape)
-    print(get_3d_locations(im_left, im_right, calib_file_dir).shape)
-    
+    print(get_3d_locations(im_left, im_right, calib_file_dir))
+
+    # location_3d = compute_3d(depth, px, py, f)
+    # print(location_3d)
+    # print(im_left.shape)
+    # print(location_3d.shape)
+    # print(get_3d_locations(im_left, im_right, calib_file_dir))

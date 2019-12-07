@@ -75,9 +75,9 @@ def extract_feature(image, image_gt, image_right, calib_path):
                     if idx == size - 1:
                         flag = False
                     item_idx = image.shape[1] * i + j
-                    x += locations_3D[item_idx, 0]
-                    y += locations_3D[item_idx, 1]
-                    z += locations_3D[item_idx, 2]
+                    x += locations_3D[item_idx][0]
+                    y += locations_3D[item_idx][1]
+                    z += locations_3D[item_idx][2]
                     if image_gt[i,j,0] > 0:
                         lable_sum+=1
             rgb_mean.append(sum_rgb/size)
@@ -155,9 +155,9 @@ def extract_test_feature(image, image_right, calib_path):
                     if idx == size - 1:
                         flag = False
                     item_idx = image.shape[1] * i + j
-                    x += locations_3D[item_idx, 0]
-                    y += locations_3D[item_idx, 1]
-                    z += locations_3D[item_idx, 2]
+                    x += locations_3D[item_idx][0]
+                    y += locations_3D[item_idx][1]
+                    z += locations_3D[item_idx][2]
             rgb_mean.append(sum_rgb/size)
             lab_mean.append(sum_lab/size)
             hsv_mean.append(sum_hsv/size)        
@@ -230,7 +230,7 @@ def train(data, labels, model_path):
 def test_single_data(image_path, calib_path=None):
     data, labels = [], []
 
-    if os.path.isfile('training_data_features.npy') and os.path.isfile('training_data_labels.npy'):
+    if os.path.isfile('training_data_features_2.npy') and os.path.isfile('training_data_labels_2.npy'):
         data, labels = load_training_data()
     else: 
         data, labels = extract_trainings()
@@ -249,8 +249,8 @@ def test_single_data(image_path, calib_path=None):
 
 def load_training_data():
     # Load Data
-    data = np.load('training_data_features.npy', allow_pickle=True)
-    labels = np.load('training_data_labels.npy', allow_pickle=True)
+    data = np.load('training_data_features_2.npy', allow_pickle=True)
+    labels = np.load('training_data_labels_2.npy', allow_pickle=True)
     
     # Display Message
     print('Training Data Successfully Loaded!')
@@ -307,8 +307,8 @@ def visualize_segementation(imgLeft, gt_mask):
     plt.show()
 
 if __name__ == '__main__':
-    test_path = 'train/image_left/um_000001.jpg'
-    test = cv2.imread('train/image_left/um_000001.jpg')
+    test_path = 'train/image_left/um_000025.jpg'
+    test = cv2.imread('train/image_left/um_000025.jpg')
     predictions, img_seg = test_single_data(test_path)
     gt_mask_1 = get_segmentation(predictions, test, img_seg)
     visualize_segementation(test, gt_mask_1)
