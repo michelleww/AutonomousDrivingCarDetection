@@ -92,19 +92,21 @@ if __name__ == "__main__":
     # plt.show()
     # compute depth
     f, T, px, py, depth = compute_depth(calib_dir, disparity)
-
+    depth = (depth*255).round().astype(np.uint8)
+    print(depth)
+    print(depth.shape)
     # compute 3D location
-    location_3d_ = compute_3d(depth, px, py, f)
+    #location_3d_ = compute_3d(depth, px, py, f)
     # print(location_3d_)
 
     # float64
-    X = ((location_3d_[:,:,0])*255).round().astype(np.uint8).flatten()
-    Y = ((location_3d_[:,:,1])*255).round().astype(np.uint8).flatten()
-    Z = ((location_3d_[:,:,2])*255).round().astype(np.uint8).flatten()
-    data = np.c_[X,Y,Z]
-    print(data.shape)
+    # X = ((location_3d_[:,:,0])*255).round().astype(np.uint8).flatten()
+    # Y = ((location_3d_[:,:,1])*255).round().astype(np.uint8).flatten()
+    # Z = ((location_3d_[:,:,2])*255).round().astype(np.uint8).flatten()
+    # data = np.c_[X,Y,Z]
+    # print(data.shape)
 
-    visualize_fitted_plane(data)
+    visualize_fitted_plane(depth)
 
     
 
