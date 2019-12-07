@@ -227,7 +227,7 @@ def train(data, labels, model_path):
     print('The testing accuracy is: ' + str(model.score(X_test, y_test)))
     return model
 
-def test_single_data(image_path, cali_path=None):
+def test_single_data(image_path, calib_path=None):
     data, labels = [], []
 
     if os.path.isfile('training_data_features.npy') and os.path.isfile('training_data_labels.npy'):
@@ -237,7 +237,7 @@ def test_single_data(image_path, cali_path=None):
 
     image = cv2.imread(image_path)
     image_right = cv2.imread(image_path.replace('image_left', 'image_right'))
-    if cali_path == None:
+    if calib_path == None:
         calib_path = image_path.replace('image_left', 'calib').replace('.jpg', '.txt')
     test_data, img_seg = extract_test_feature(image, image_right, calib_path)
 
