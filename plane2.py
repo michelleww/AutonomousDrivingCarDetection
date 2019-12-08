@@ -13,6 +13,7 @@ from sklearn import linear_model, datasets
 from skimage.measure import LineModelND, ransac
 import scipy.linalg
 import open3d
+import random
 
 def fit_plane(mask_2d):
     pass
@@ -97,34 +98,45 @@ def visualize_fitted_plane(data, order=1):
     # test_pcd.colors = open3d.utility.Vector3dVector(colors)  # 定义点云的颜色
     # open3d.visualization.draw_geometries([test_pcd] + [axis_pcd], window_name="Open3D2")
 
-def prepare_3d_points(gt_mask, map_3ds):
+def prepare_3d_points(gt_mask, map_3ds, img):
     points = []
     colors = []
+    # plt.imshow(gt_mask)
+    # plt.show()
     road_points = np.nonzero(gt_mask)
     gt_mask = np.array(gt_mask)
     height, width = gt_mask.shape
+
     size = len(road_points[0])
     for idx in range(size):
         i = road_points[0][idx]
         j = road_points[1][idx]
         position = map_3ds[i*width+j]
         points.append([position[0], position[1], position[2]])
+        # print(img[i,j])
+        colors.append(img[i,j]/255)
     print(len(points))
-    return points
+    return points, colors
 
 
-def v2(data):
+def v2(data, colors):
+
+    # print(x)
+    print(colors[0])
+    print(data[0])
+    # colors = [[0.5,0,0] for c in colors]
     pcd = open3d.geometry.PointCloud()
     pcd.points = open3d.utility.Vector3dVector(data) 
+    pcd.colors = open3d.utility.Vector3dVector(colors) 
 
     print("Downsample the point cloud with a voxel of 0.05")
-    downpcd = pcd.voxel_down_sample(voxel_size=0.05)
+    # downpcd = pcd.voxel_down_sample(voxel_size=0.05)
     # open3d.visualization.draw_geometries([downpcd])
 
     print("Recompute the normal of the downsampled point cloud")
     # downpcd.estimate_normals(search_param=open3d.geometry.KDTreeSearchParamHybrid(
     #     radius=0.1, max_nn=30))
-    open3d.visualization.draw_geometries([downpcd])
+    open3d.visualization.draw_geometries([pcd])
 
 def v1(data):
     x=[k[0] for k in data]
@@ -134,7 +146,7 @@ def v1(data):
     fig=plt.figure(dpi=120)
     ax=fig.add_subplot(111,projection='3d')
     plt.title('point cloud')
-    ax.scatter(z,y,x,c='b',marker='.',s=2,linewidth=0,alpha=1,cmap='spectral')
+    ax.scatter(x,y,z,c='b',marker='.',s=2,linewidth=0,alpha=1,cmap='spectral')
 
     #ax.set_facecolor((0,0,0))
     # ax.axis('scaled')          
@@ -145,7 +157,29 @@ def v1(data):
     ax.set_zlabel('Z Label')
     plt.show()
 
+def fit_plane_ransac(road_pixels, sample_size, max_iterations, inlier_thresh=0.03, random_seed=None):
+    max_inlier_num = -1
+    best_model = None
+    random.seed(random_seed)
 
+    for i in range(max_iterations):
+        sample = np.array(random.sample(road_pixels, sample_size))
+
+        A = np.c_[sample[:,0], sample[:,1], np.ones(sample.shape[0])]
+
+        # get plane coefficient
+        coefficients,_,_,_ = scipy.linalg.lstsq(A, sample[:,2]) 
+        print(coefficients)
+
+        # get point distances from the estimated plane
+        dists = np.abs(sample @ coefficients) / np.sqrt(coefficients[0]**2 + coefficients[1]**2 + coefficients[2]**2)
+        
+        num_inliers = len(np.where(dists < inlier_thresh)[0])
+        if num_inliers > max_inlier_num:
+            max_inlier_num = num_inliers
+            best_model = coefficients
+
+    return best_model
 
 if __name__ == "__main__":
     # dir
@@ -183,7 +217,7 @@ if __name__ == "__main__":
 
     data = get_3d_locations(test_left, test_right,calib_dir)
 
-    data = (np.array(data)).astype(np.float32)
+    data = (np.array(data)*255).astype(np.uint8)
     
 
 
@@ -199,22 +233,33 @@ if __name__ == "__main__":
 
 
     # # use left image as the test image, only make prediction on the left image
-    gt=[]
-    if os.path.isfile('gt.npy'):
-        gt = np.load('gt.npy', allow_pickle=True)
-    else:
-        predictions_l, img_seg_l = test_single_data(left_im_dir, calib_dir)
-        gt_mask_left = get_segmentation(predictions_l, test_left, img_seg_l)
+    # gt=[]
+    # if os.path.isfile('gt.npy'):
+    #     gt = np.load('gt.npy', allow_pickle=True)
+    # else:
+    #     predictions_l, img_seg_l = test_single_data(left_im_dir, calib_dir)
+    #     gt_mask_left = get_segmentation(predictions_l, test_left, img_seg_l)
     
-        np.save('gt', gt_mask_left)
-    road_3ds = prepare_3d_points(gt, data)
+    #     np.save('gt', gt_mask_left)
+    #road_3ds, colors = prepare_3d_points(gt, data, test_left)
+    # sample_size = int(len(road_3ds)*0.65)
+    # fit_plane_ransac(road_3ds, sample_size, 2, random_seed=7)
+    # print(prepare_3d_points(gt, data))
 
     # z = [(point[2]=0) for point in road_3ds]
     # new = np.array(road_3ds)
     # new[new]
     # counts = np.bincount(z)
     # print(np.argmax(counts))
+    data_color = np.zeros_like(test_left)
 
-    v1(road_3ds)
+    height, width, depth = test_left.shape
+    for i in range(height):
+        for j in range(width):
+            # data_color.append(test_left[i,j]/255)
+            np.append(data_color, test_left[i,j]/255)
+    
+
+    v2(data, data_color)
 
 

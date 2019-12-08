@@ -38,7 +38,9 @@ def get_3d_locations(img_left, img_right, calib_path):
     img_left_gray = cv2.cvtColor(img_left, cv2.COLOR_BGR2GRAY)
     img_right_gray = cv2.cvtColor(img_right, cv2.COLOR_BGR2GRAY)
     disparity = compute_disparity(img_left_gray, img_right_gray)
+    disparity = sp.ndimage.gaussian_filter(disparity, sigma=2)
     f,T,px,py,depth = compute_depth(calib_path, disparity)
+
     
     height, width = depth.shape
     image_3d = []
@@ -48,9 +50,11 @@ def get_3d_locations(img_left, img_right, calib_path):
             Z = depth[i,j]
             Z = Z
             # print(Z)
+            # image_3d.append([i, j, Z])
             image_3d.append([(i-py)*Z/f, (j-px)*Z/f, Z])
-            # image_3d.append([(j-px)*Z/f, (i-pi)*Z/f, Z])
-
+    # X = [point[0] for point in image_3d]
+    # X = np.array(X)
+    #print(np.count_nonzero(X<0), np.count_nonzero(X> 0))
     return image_3d
 
 if __name__ == "__main__":

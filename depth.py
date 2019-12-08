@@ -18,29 +18,41 @@ def compute_depth(calib_file, disparity):
     T = -float(p['P1'][3])/f
     px = float(p['P1'][2])
     py = float(p['P1'][6])
+    # print(disparity.as)
+    print(f, T, px,py)
     depth = np.divide(f*T,disparity,where=disparity!=0)
-    # depth = (depth).astype(np.uint8)
+    print(depth)
+    
     return f,T,px,py,depth
-
 
 if __name__ == "__main__":
     # choose two stereo images
-    im_left_path = "train/image_left/um_000000.jpg"
-    im_right_path = "train/image_right/um_000000.jpg"
+    im_left_path = "train/image_left/umm_000011.jpg"
+    im_right_path = "train/image_right/umm_000011.jpg"
     # read images
     # im_left = io.imread(im_left_path)
-    im_left = cv2.imread(im_left_path)
-    im_left = cv2.cvtColor(im_left, cv2.COLOR_BGR2RGB)
+    im_left = cv2.imread(im_left_path, 0)
+    # im_left = cv2.cvtColor(im_left, cv2.COLOR_BGR2RGB)
     # im_right = io.imread(im_right_path)
-    im_right = cv2.imread(im_right_path)
-    im_right = cv2.cvtColor(im_right, cv2.COLOR_BGR2RGB)
+    im_right = cv2.imread(im_right_path, 0)
+    # im_right = cv2.cvtColor(im_right, cv2.COLOR_BGR2RGB)
 
     # compute disparity map
-    disparity = compute_disparity(im_left, im_right)
+    disparity = disparity_2(im_left, im_right)
+    # disparity = cv2.cvtColor(im_left, cv2.COLOR_BGR2GRAY)
 
-    calib_file_dir = 'train/calib/um_000000.txt'
+
+    calib_file_dir = 'train/calib/umm_000011.txt'
     f,T,px,py,depth = compute_depth(calib_file_dir, disparity)
+    # depth = depth.astype(np.int8)
+
+    # print(disparity)
+    # print(depth)
     # plot depth map
     fig=plt.figure(figsize=(10, 10))
+
+
+    # io.imshow(depth,cmap = 'gray')
+    # io.show()
     plt.imshow(depth)
     plt.show()

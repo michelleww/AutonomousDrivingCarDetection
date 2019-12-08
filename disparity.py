@@ -16,26 +16,66 @@ def compute_disparity(im_left, im_right):
         speckleRange: Maximum disparity variation within each connected component. If you do speckle filtering, set the parameter to a positive value, it will be implicitly multiplied by 16. Normally, 1 or 2 is good enough.
     """
     stereo = cv2.StereoSGBM_create(minDisparity=0,numDisparities=80,blockSize=11,uniquenessRatio=10,speckleWindowSize=150,speckleRange=2)
-    return stereo.compute(im_left, im_right)
+    disparity = stereo.compute(im_left, im_right)
+    disparity[disparity<0] = 0.000000001
+    return disparity
 
 def disparity_own(im_left, im_right):
     pass
+
+def disparity_2(imgL, imgR):
+    window_size = 3                     # wsize default 3; 5; 7 for SGBM reduced size image; 15 for SGBM full size image (1300px and above); 5 Works nicely
+ 
+    left_matcher = cv2.StereoSGBM_create(
+    minDisparity=0,
+    numDisparities=112,             # max_disp has to be dividable by 16 f. E. HH 192, 256
+    blockSize=5,
+    P1=8 * 3 * window_size ** 2,    # wsize default 3; 5; 7 for SGBM reduced size image; 15 for SGBM full size image (1300px and above); 5 Works nicely
+    P2=32 * 3 * window_size ** 2,
+    disp12MaxDiff=1,
+    uniquenessRatio=15,
+    speckleWindowSize=0,
+    speckleRange=2,
+    preFilterCap=63,
+    mode=cv2.STEREO_SGBM_MODE_SGBM_3WAY
+    )
+    right_matcher = cv2.ximgproc.createRightMatcher(left_matcher)
+    # FILTER Parameters
+    lmbda = 80000
+    sigma = 1.2
+    visual_multiplier = 1.0
+    
+    wls_filter = cv2.ximgproc.createDisparityWLSFilter(matcher_left=left_matcher)
+    wls_filter.setLambda(lmbda)
+    wls_filter.setSigmaColor(sigma)
+    print('computing disparity...')
+    displ = left_matcher.compute(imgL, imgR)  # .astype(np.float32)/16
+    dispr = right_matcher.compute(imgR, imgL)  # .astype(np.float32)/16
+    displ = np.int16(displ)
+    dispr = np.int16(dispr)
+    filteredImg = wls_filter.filter(displ, imgL, None, dispr)  # important to put "imgL" here!!!
+
+    filteredImg = cv2.normalize(src=filteredImg, dst=filteredImg, beta=0, alpha=255, norm_type=cv2.NORM_MINMAX)
+    filteredImg = np.uint8(filteredImg)
+    return filteredImg
 
 
 if __name__ == "__main__":
     # read two stereo images
     im_left_path = "train/image_left/um_000000.jpg"
-    im_left = plt.imread(im_left_path)
+    im_left = cv2.imread(im_left_path, 0)
     #plt.imshow(im_left)
     #plt.show()
     im_right_path = "train/image_right/um_000000.jpg"
-    im_right = plt.imread(im_right_path,0)
+    im_right = cv2.imread(im_right_path,0)
     #plt.imshow(im_right)
     #plt.imshow()
     # compute disparity
-    disparity = compute_disparity(im_left, im_right)
+    # disparity = compute_disparity(im_left, im_right)
+    disparity2 = disparity_2(im_left, im_right)
+    # print(disparity)
     # show the disparity map
-    plt.imshow(disparity)
+    plt.imshow(disparity2)
     plt.show()
 
 
