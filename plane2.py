@@ -101,12 +101,14 @@ def prepare_3d_points(gt_mask, map_3ds):
     points = []
     colors = []
     road_points = np.nonzero(gt_mask)
+    gt_mask = np.array(gt_mask)
     height, width = gt_mask.shape
     size = len(road_points[0])
     for idx in range(size):
         i = road_points[0][idx]
         j = road_points[1][idx]
-        points.append(map_3ds[i*width+j])
+        position = map_3ds[i*width+j]
+        points.append([position[0], position[1], position[2]])
     print(len(points))
     return points
 
@@ -120,19 +122,19 @@ def v2(data):
     # open3d.visualization.draw_geometries([downpcd])
 
     print("Recompute the normal of the downsampled point cloud")
-    downpcd.estimate_normals(search_param=open3d.geometry.KDTreeSearchParamHybrid(
-        radius=0.1, max_nn=30))
+    # downpcd.estimate_normals(search_param=open3d.geometry.KDTreeSearchParamHybrid(
+    #     radius=0.1, max_nn=30))
     open3d.visualization.draw_geometries([downpcd])
 
 def v1(data):
-    y=[k[0] for k in data]
-    x=[k[1] for k in data]
+    x=[k[0] for k in data]
+    y=[k[1] for k in data]
     z=[k[2] for k in data]
 
     fig=plt.figure(dpi=120)
     ax=fig.add_subplot(111,projection='3d')
     plt.title('point cloud')
-    ax.scatter(x,y,z,c='b',marker='.',s=2,linewidth=0,alpha=1,cmap='spectral')
+    ax.scatter(z,y,x,c='b',marker='.',s=2,linewidth=0,alpha=1,cmap='spectral')
 
     #ax.set_facecolor((0,0,0))
     # ax.axis('scaled')          
@@ -181,7 +183,7 @@ if __name__ == "__main__":
 
     data = get_3d_locations(test_left, test_right,calib_dir)
 
-    data = (np.array(data)*255).round().astype(np.uint8)
+    data = (np.array(data)).astype(np.float32)
     
 
 
@@ -197,17 +199,22 @@ if __name__ == "__main__":
 
 
     # # use left image as the test image, only make prediction on the left image
-    road_3ds=[]
-    if os.path.isfile('road_data.npy'):
-        road_3ds = np.load('road_data.npy', allow_pickle=True)
+    gt=[]
+    if os.path.isfile('gt.npy'):
+        gt = np.load('gt.npy', allow_pickle=True)
     else:
         predictions_l, img_seg_l = test_single_data(left_im_dir, calib_dir)
         gt_mask_left = get_segmentation(predictions_l, test_left, img_seg_l)
-
-        road_3ds = prepare_3d_points(gt_mask_left, data)
     
-        np.save('road_data', road_3ds)
+        np.save('gt', gt_mask_left)
+    road_3ds = prepare_3d_points(gt, data)
 
-    v2(road_3ds)
+    # z = [(point[2]=0) for point in road_3ds]
+    # new = np.array(road_3ds)
+    # new[new]
+    # counts = np.bincount(z)
+    # print(np.argmax(counts))
+
+    v1(road_3ds)
 
 
