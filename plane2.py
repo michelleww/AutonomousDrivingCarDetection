@@ -111,6 +111,38 @@ def prepare_3d_points(gt_mask, map_3ds):
     return points
 
 
+def v2(data):
+    pcd = open3d.geometry.PointCloud()
+    pcd.points = open3d.utility.Vector3dVector(data) 
+
+    print("Downsample the point cloud with a voxel of 0.05")
+    downpcd = pcd.voxel_down_sample(voxel_size=0.05)
+    # open3d.visualization.draw_geometries([downpcd])
+
+    print("Recompute the normal of the downsampled point cloud")
+    downpcd.estimate_normals(search_param=open3d.geometry.KDTreeSearchParamHybrid(
+        radius=0.1, max_nn=30))
+    open3d.visualization.draw_geometries([downpcd])
+
+def v1(data):
+    x=[k[0] for k in data]
+    y=[k[1] for k in data]
+    z=[k[2] for k in data]
+
+    fig=plt.figure(dpi=120)
+    ax=fig.add_subplot(111,projection='3d')
+    plt.title('point cloud')
+    ax.scatter(x,y,z,c='b',marker='.',s=2,linewidth=0,alpha=1,cmap='spectral')
+
+    #ax.set_facecolor((0,0,0))
+    # ax.axis('scaled')          
+    # ax.xaxis.set_visible(False) 
+    # ax.yaxis.set_visible(False) 
+    ax.set_xlabel('X Label')
+    ax.set_ylabel('Y Label')
+    ax.set_zlabel('Z Label')
+    plt.show()
+
 
 
 if __name__ == "__main__":
@@ -151,18 +183,6 @@ if __name__ == "__main__":
 
     data = (np.array(data)*255).round().astype(np.uint8)
     
-    
-    pcd = open3d.geometry.PointCloud()
-    pcd.points = open3d.utility.Vector3dVector(data) 
-
-    print("Downsample the point cloud with a voxel of 0.05")
-    downpcd = pcd.voxel_down_sample(voxel_size=0.05)
-    # open3d.visualization.draw_geometries([downpcd])
-
-    print("Recompute the normal of the downsampled point cloud")
-    downpcd.estimate_normals(search_param=open3d.geometry.KDTreeSearchParamHybrid(
-        radius=0.1, max_nn=30))
-    open3d.visualization.draw_geometries([downpcd])
 
 
     # print(data)
@@ -177,7 +197,11 @@ if __name__ == "__main__":
 
 
     # # use left image as the test image, only make prediction on the left image
-    # predictions_l, img_seg_l = test_single_data(left_im_dir, calib_dir)
-    # gt_mask_left = get_segmentation(predictions_l, test_left, img_seg_l)
+    predictions_l, img_seg_l = test_single_data(left_im_dir, calib_dir)
+    gt_mask_left = get_segmentation(predictions_l, test_left, img_seg_l)
 
-    # road_3ds = prepare_3d_points(gt_mask_left, data)
+    road_3ds = prepare_3d_points(gt_mask_left, data)
+
+    v2(road_3ds)
+
+
