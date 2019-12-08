@@ -6,3 +6,7 @@
 *.mat
 *.pkl
 *.npy
+*.m
+*.cc
+*.pdf
+*.m
