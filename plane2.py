@@ -193,8 +193,6 @@ if __name__ == "__main__":
     # right image
     test_right = cv2.imread(right_im_dir)
 
-    print(test_left.shape)
-
 
     # # compute disparity
     # disparity = compute_disparity(test_left, test_right)
@@ -254,10 +252,8 @@ if __name__ == "__main__":
     data_color = np.zeros_like(test_left)
 
     height, width, depth = test_left.shape
-    for i in range(height):
-        for j in range(width):
-            # data_color.append(test_left[i,j]/255)
-            np.append(data_color, test_left[i,j]/255)
+    test_left = test_left/255
+    data_color = test_left.reshape(height*width, 3)
     
 
     v2(data, data_color)
