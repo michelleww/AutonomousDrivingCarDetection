@@ -85,27 +85,3 @@ if __name__ == '__main__':
     create_output_directory()
     training_directory = './train_angle/image'
     get_car_segmentation(training_directory)
-
-
-    # imgLeft = cv2.imread('./train_angle/image/000110.jpg')
-    # detection = scipy.io.loadmat('./train_angle/labels/000110.mat')
-    # detections = detection['annotation'][0][0]
-
-    # classes = detections[0][0]
-    # boxes = detections[3]
-    # truncated = detections[4][0]
-    # angles = detections[7]
-    # occluded = detections[8][0]
-
-
-    # for idx in range(len(classes)):
-    #     if classes[idx][0] == 'Car' and truncated[idx][0] <= 0.3 and occluded[idx][0] <= 2:
-    #         box = boxes[idx]
-    #         print(occluded[idx][0])
-    #         xleft, ytop, width, height = int(round(box[0])), int(round(box[1])), int(round(box[2])), int(round(box[3]))
-
-    #         cv2.rectangle(imgLeft, (int(xleft), int(ytop)),
-    #               (int(xleft+width), int(ytop+height)), [255,255,0],3)
-
-    # plt.imshow(imgLeft)
-    # plt.show()
