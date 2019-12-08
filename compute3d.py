@@ -37,8 +37,8 @@ def compute_3d_2(depth, px, py, f):
 def get_3d_locations(img_left, img_right, calib_path):
     img_left_gray = cv2.cvtColor(img_left, cv2.COLOR_BGR2GRAY)
     img_right_gray = cv2.cvtColor(img_right, cv2.COLOR_BGR2GRAY)
-    disparity = compute_disparity(img_left_gray, img_right_gray)
-    disparity = sp.ndimage.gaussian_filter(disparity, sigma=2)
+    disparity = disparity_2(img_left_gray, img_right_gray)
+    disparity = sp.ndimage.gaussian_filter(disparity, sigma=1)
     f,T,px,py,depth = compute_depth(calib_path, disparity)
 
     

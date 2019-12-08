@@ -122,8 +122,8 @@ def prepare_3d_points(gt_mask, map_3ds, img):
 def v2(data, colors):
 
     # print(x)
-    print(colors[0])
-    print(data[0])
+    # print(colors[0])
+    # print(data[0])
     # colors = [[0.5,0,0] for c in colors]
     pcd = open3d.geometry.PointCloud()
     pcd.points = open3d.utility.Vector3dVector(data) 
@@ -215,7 +215,7 @@ if __name__ == "__main__":
 
     data = get_3d_locations(test_left, test_right,calib_dir)
 
-    data = (np.array(data)*255).astype(np.uint8)
+    # data = (np.array(data)*255).astype(np.uint8)
     
 
 
@@ -252,6 +252,8 @@ if __name__ == "__main__":
     data_color = np.zeros_like(test_left)
 
     height, width, depth = test_left.shape
+
+    test_left = cv2.cvtColor(test_left, cv2.COLOR_BGR2RGB)
     test_left = test_left/255
     data_color = test_left.reshape(height*width, 3)
     
