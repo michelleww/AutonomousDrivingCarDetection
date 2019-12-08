@@ -22,7 +22,7 @@ def get_resize_info(input_path):
 def prepare_data(input_directory, resize):
     feature_list = []
     labels = []
-    angles = ['30', '60', '90', '120', '150', '180', '210', '240', '270', '300', '330', '360']
+    angles = ['00', '30', '60', '90', '120', '150', '180', '210', '240', '270', '300', '330']
     for angle in angles:
         directory = input_directory  + angle + '/'
         files = os.listdir(directory)
@@ -51,6 +51,9 @@ def train(resize_info, input_directory, svm_path):
     svm.fit(X_train, y_train)
     joblib.dump(svm, svm_path)
     print('Done training!')
+
+    print('The training accuracy is: ' + str(svm.score(X_train, y_train)))
+    print('The validation accuracy is: ' + str(svm.score(X_test, y_test)))
 
     return data, labels, svm
 
