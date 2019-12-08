@@ -125,8 +125,8 @@ def v2(data):
     open3d.visualization.draw_geometries([downpcd])
 
 def v1(data):
-    x=[k[0] for k in data]
-    y=[k[1] for k in data]
+    y=[k[0] for k in data]
+    x=[k[1] for k in data]
     z=[k[2] for k in data]
 
     fig=plt.figure(dpi=120)
@@ -197,10 +197,16 @@ if __name__ == "__main__":
 
 
     # # use left image as the test image, only make prediction on the left image
-    predictions_l, img_seg_l = test_single_data(left_im_dir, calib_dir)
-    gt_mask_left = get_segmentation(predictions_l, test_left, img_seg_l)
+    road_3ds=[]
+    if os.path.isfile('road_data.npy'):
+        road_3ds = np.load('road_data.npy', allow_pickle=True)
+    else:
+        predictions_l, img_seg_l = test_single_data(left_im_dir, calib_dir)
+        gt_mask_left = get_segmentation(predictions_l, test_left, img_seg_l)
 
-    road_3ds = prepare_3d_points(gt_mask_left, data)
+        road_3ds = prepare_3d_points(gt_mask_left, data)
+    
+        np.save('road_data', road_3ds)
 
     v2(road_3ds)
 
