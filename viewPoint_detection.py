@@ -45,7 +45,7 @@ def train(resize_info, input_directory, svm_path):
     print('Done pre-processing!')
 
 
-    X_train, X_test, y_train, y_test = train_test_split(data,labels,test_size=0.3)
+    X_train, X_test, y_train, y_test = train_test_split(data,labels,test_size=0.25)
     print('Start Training process...')
     svm = LinearSVC(random_state=0, dual= False, multi_class='ovr', class_weight = 'balanced', max_iter= 10000, C= 100.0)
     svm.fit(X_train, y_train)
@@ -90,9 +90,6 @@ if __name__ == '__main__':
     # training data
     data, labels, svm = train(resize_info, 'angle_classification/', 'svm.pkl')
 
-    # testing data set
-    test_data_set(data, labels, svm)
-
     # testing singel image
-    test_single_image('001045_150_1.jpg', resize_info, 'svm.pkl')
-    test_single_image('002110_300_1.jpg', resize_info, 'svm.pkl')
+    test_single_image('001045_120_1.jpg', resize_info, 'svm.pkl')
+    test_single_image('002110_270_1.jpg', resize_info, 'svm.pkl')
