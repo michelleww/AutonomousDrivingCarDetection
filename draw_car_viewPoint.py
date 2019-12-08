@@ -33,8 +33,8 @@ def draw_boxes_and_arrow(boxes, recursive_glob_path, img_path, svm_path):
         center_point_x = (right + left)/2
         center_point_y = (bottom + top)/2
         length  = (bottom - top)/2 + 15
-        p2_x =  int(round(center_point_x + length * math.cos(angle * np.pi / 180.0)))
-        p2_y =  int(round(center_point_y + length * math.sin(angle * np.pi / 180.0)))
+        p2_x =  int(round(center_point_x + length * math.cos((angle+90)* np.pi / 180.0)))
+        p2_y =  int(round(center_point_y + length * math.sin((angle+90) * np.pi / 180.0)))
 
         # Draw Rectangle with the coordinates and put detection class on the left top cornor
         cv2.rectangle(img, box[0], box[1],color=(0, 255, 0), thickness=1)
