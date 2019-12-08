@@ -20,10 +20,7 @@ def compute_disparity(im_left, im_right):
     disparity[disparity<0] = 0.000000001
     return disparity
 
-def disparity_own(im_left, im_right):
-    pass
-
-def disparity_2(imgL, imgR):
+def get_disparity(imgL, imgR):
     window_size = 3                     # wsize default 3; 5; 7 for SGBM reduced size image; 15 for SGBM full size image (1300px and above); 5 Works nicely
  
     left_matcher = cv2.StereoSGBM_create(
@@ -62,18 +59,15 @@ def disparity_2(imgL, imgR):
 
 if __name__ == "__main__":
     # read two stereo images
-    im_left_path = "train/image_left/um_000000.jpg"
+    im_left_path = "train/image_left/umm_000011.jpg"
     im_left = cv2.imread(im_left_path, 0)
-    #plt.imshow(im_left)
-    #plt.show()
-    im_right_path = "train/image_right/um_000000.jpg"
+
+    im_right_path = "train/image_right/umm_000011.jpg"
     im_right = cv2.imread(im_right_path,0)
-    #plt.imshow(im_right)
-    #plt.imshow()
+
     # compute disparity
-    # disparity = compute_disparity(im_left, im_right)
-    disparity2 = disparity_2(im_left, im_right)
-    # print(disparity)
+    disparity2 = get_disparity(im_left, im_right)
+
     # show the disparity map
     plt.imshow(disparity2)
     plt.show()
