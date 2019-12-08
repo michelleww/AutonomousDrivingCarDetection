@@ -1,9 +1,7 @@
-from skimage import io
 import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 from skimage.segmentation import slic
-from skimage.measure import perimeter
 import os
 import joblib
 import mahotas as mt
@@ -11,9 +9,8 @@ import matplotlib.colors as mcolors
 import webcolors
 from compute3d import get_3d_locations
 from sklearn.ensemble import RandomForestClassifier
-from skimage.color import rgb2lab, lab2rgb
+from skimage.color import rgb2lab
 import copy
-from skimage import feature
 from sklearn.model_selection import train_test_split
 
 def extract_feature(image, image_gt, image_right, calib_path):
@@ -22,6 +19,7 @@ def extract_feature(image, image_gt, image_right, calib_path):
     sobelx = cv2.Sobel(image_gray,cv2.CV_64F,1,0,ksize=5)
     sobely = cv2.Sobel(image_gray,cv2.CV_64F,0,1,ksize=5)
 
+    # convert to lab and hsv images
     image_lab = rgb2lab(copy.deepcopy(image)/255)
     image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
@@ -39,9 +37,6 @@ def extract_feature(image, image_gt, image_right, calib_path):
         features = []
         roi = (img_seg == label)
         roi_idx = np.nonzero(roi)
-
-        seg_center_x = np.mean(roi_idx[0])
-        seg_center_y = np.mean(roi_idx[1])
 
         seg_sobel_x = sobelx[roi]
         seg_sobel_y = sobely[roi]
