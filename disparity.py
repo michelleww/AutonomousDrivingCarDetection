@@ -4,9 +4,8 @@ import cv2
 from matplotlib import pyplot as plt
 import io
 
-
-
-def compute_disparity(im_left, im_right):
+# Reference: http://timosam.com/python_opencv_depthimage
+def get_disparity(imgL, imgR):
     """ cv2.StereoSGBM_create:
         minDisparity: Minimum possible disparity value.
         numDisparities: Maximum disparity minus minimum disparity.  This parameter must be divisible by 16 and >= 0.
@@ -15,14 +14,8 @@ def compute_disparity(im_left, im_right):
         speckleWindowSize: Maximum size of smooth disparity regions to consider their noise speckles and invalidate. Set it to 0 to disable speckle filtering. Otherwise, set it somewhere in the 50-200 range.
         speckleRange: Maximum disparity variation within each connected component. If you do speckle filtering, set the parameter to a positive value, it will be implicitly multiplied by 16. Normally, 1 or 2 is good enough.
     """
-    stereo = cv2.StereoSGBM_create(minDisparity=0,numDisparities=80,blockSize=11,uniquenessRatio=10,speckleWindowSize=150,speckleRange=2)
-    disparity = stereo.compute(im_left, im_right)
-    disparity[disparity<0] = 0.000000001
-    return disparity
-
-def get_disparity(imgL, imgR):
     window_size = 3                     # wsize default 3; 5; 7 for SGBM reduced size image; 15 for SGBM full size image (1300px and above); 5 Works nicely
- 
+    # create a Stereo with SGBM algorithm
     left_matcher = cv2.StereoSGBM_create(
     minDisparity=0,
     numDisparities=112,             # max_disp has to be dividable by 16 f. E. HH 192, 256
@@ -37,7 +30,8 @@ def get_disparity(imgL, imgR):
     mode=cv2.STEREO_SGBM_MODE_SGBM_3WAY
     )
     right_matcher = cv2.ximgproc.createRightMatcher(left_matcher)
-    # FILTER Parameters
+
+    # FILTER Parameters (image post processing), in order to smooth the disparity map for eliminate noise
     lmbda = 80000
     sigma = 1.2
     visual_multiplier = 1.0
