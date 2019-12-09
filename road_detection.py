@@ -1,9 +1,7 @@
-from skimage import io
 import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 from skimage.segmentation import slic
-from skimage.measure import perimeter
 import os
 import joblib
 import mahotas as mt
@@ -11,9 +9,8 @@ import matplotlib.colors as mcolors
 import webcolors
 from compute3d import get_3d_locations
 from sklearn.ensemble import RandomForestClassifier
-from skimage.color import rgb2lab, lab2rgb
+from skimage.color import rgb2lab
 import copy
-from skimage import feature
 from sklearn.model_selection import train_test_split
 
 def extract_feature(image, image_gt, image_right, calib_path):
@@ -22,6 +19,7 @@ def extract_feature(image, image_gt, image_right, calib_path):
     sobelx = cv2.Sobel(image_gray,cv2.CV_64F,1,0,ksize=5)
     sobely = cv2.Sobel(image_gray,cv2.CV_64F,0,1,ksize=5)
 
+    # convert to lab and hsv images
     image_lab = rgb2lab(copy.deepcopy(image)/255)
     image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
@@ -40,9 +38,6 @@ def extract_feature(image, image_gt, image_right, calib_path):
         roi = (img_seg == label)
         roi_idx = np.nonzero(roi)
 
-        seg_center_x = np.mean(roi_idx[0])
-        seg_center_y = np.mean(roi_idx[1])
-
         seg_sobel_x = sobelx[roi]
         seg_sobel_y = sobely[roi]
 
@@ -54,6 +49,7 @@ def extract_feature(image, image_gt, image_right, calib_path):
         features.extend([np.mean(seg_sobel_x), np.mean(seg_sobel_y), magnitude_mean, direction_mean])
         
         # extract color features  and 3D feature
+        # loop through pixels to get the mean value
         x, y, z = 0, 0, 0
         flag = True
         rgb_mean = []
@@ -82,9 +78,12 @@ def extract_feature(image, image_gt, image_right, calib_path):
                         lable_sum+=1
             rgb_mean.append(sum_rgb/size)
             lab_mean.append(sum_lab/size)
-            hsv_mean.append(sum_hsv/size)        
+            hsv_mean.append(sum_hsv/size)    
+        # mean rgb values    
         features.extend(rgb_mean)
+        # mean lab values
         features.extend(lab_mean)
+        # mean lab value
         features.extend(hsv_mean)
         features.extend([x/size, y/size, z/size])
 
@@ -133,7 +132,7 @@ def extract_test_feature(image, image_right, calib_path):
         # add computed 2 D features
         features.extend([np.mean(seg_sobel_x), np.mean(seg_sobel_y), magnitude_mean, direction_mean])
 
-        # extract color features  and 3D feature
+        # extract color features and 3D feature
         x, y, z = 0, 0, 0
         flag = True
         rgb_mean = []
@@ -141,6 +140,7 @@ def extract_test_feature(image, image_right, calib_path):
         hsv_mean = []
         size = len(roi_idx[0])
 
+        # loop through the superpixels to get the mean value
         for channel in range(3):
             sum_rgb = 0
             sum_lab = 0
@@ -160,10 +160,14 @@ def extract_test_feature(image, image_right, calib_path):
                     z += locations_3D[item_idx][2]
             rgb_mean.append(sum_rgb/size)
             lab_mean.append(sum_lab/size)
-            hsv_mean.append(sum_hsv/size)        
+            hsv_mean.append(sum_hsv/size)    
+        # use mean of the rgb value    
         features.extend(rgb_mean)
+        # use mean of the lab value  
         features.extend(lab_mean)
+        # use mean of the hsv value  
         features.extend(hsv_mean)
+        # use mean of the 3d locations
         features.extend([x/size, y/size, z/size])
 
         seg_gray = image_gray*roi
@@ -199,6 +203,7 @@ def extract_trainings():
         img_gt = cv2.imread(img_gt_path)
         img_right = cv2.imread(img_right_path)
 
+        # extract features for the given file
         features, labels= extract_feature(img, img_gt, img_right, calib_path)
 
         # add features for a single image
@@ -214,11 +219,15 @@ def extract_trainings():
     return data_features, data_labels
 
 def train(data, labels, model_path):
+    # slpit the data into training set and testing set with ratio 7.5:0.5
     X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.25, random_state=42)
 
     print('Start Training process...')
     
+    # initialize the random forest classifier 
     model = RandomForestClassifier(n_estimators=330, criterion='entropy', min_samples_leaf=3, min_samples_split=8)  
+    
+    # fit the data
     model.fit(X_train, y_train)
     print('The training accuracy is: ' + str(model.score(X_train, y_train)))
     joblib.dump(model, model_path)
@@ -307,8 +316,8 @@ def visualize_segementation(imgLeft, gt_mask):
     plt.show()
 
 if __name__ == '__main__':
-    test_path = 'train/image_left/um_000025.jpg'
-    test = cv2.imread('train/image_left/um_000025.jpg')
+    test_path = 'train/image_left/um_000010.jpg'
+    test = cv2.imread('train/image_left/um_000010.jpg')
     predictions, img_seg = test_single_data(test_path)
     gt_mask_1 = get_segmentation(predictions, test, img_seg)
     visualize_segementation(test, gt_mask_1)

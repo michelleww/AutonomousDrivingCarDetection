@@ -3,47 +3,25 @@ import scipy as sp
 import cv2
 from matplotlib import pyplot as plt
 from disparity import *
-from skimage import io
-from disparity import *
 from depth import *
 
-def compute_3d(depth, px, py, f):
-    [M, N] = depth.shape
-    image_3d = np.zeros((M,N,3))
-
-    x_2d = np.zeros((M,N))
-    y_2d = np.zeros((M,N))
-
-    x_3d = (x_2d - px) * depth / f
-    y_3d = (y_2d - py) * depth / f
-
-    image_3d[:,:,0] = x_3d
-    image_3d[:,:,1] = y_3d
-    image_3d[:,:,2] = depth
-
-    return image_3d
-
-def compute_3d_2(depth, px, py, f):
-    [M, N] = depth.shape
-    image_3d = np.zeros((M,N,3))
-    for i in range(M):
-        for j in range(N):
-            Z = depth[i,j]
-            image_3d[i,j] = [(i-py)*Z/f, (j-px)*Z/f, Z]
-
-    return image_3d
-
-
 def get_3d_locations(img_left, img_right, calib_path):
+
     img_left_gray = cv2.cvtColor(img_left, cv2.COLOR_BGR2GRAY)
     img_right_gray = cv2.cvtColor(img_right, cv2.COLOR_BGR2GRAY)
+    # get disparity map
     disparity = get_disparity(img_left_gray, img_right_gray)
+
+    # gaussian blur
     disparity = sp.ndimage.gaussian_filter(disparity, sigma=1)
+
+    # get depth map and basic calibaration data
     f,T,px,py,depth = compute_depth(calib_path, disparity)
 
     height, width = depth.shape
     image_3d = []
 
+    # calculate 3D locations for each pixel, append to a list
     for i in range(height):
         for j in range(width):
             Z = depth[i,j]
