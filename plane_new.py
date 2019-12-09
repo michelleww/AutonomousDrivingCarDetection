@@ -34,7 +34,7 @@ def get_plane(points):
     return [a, b, c,d]
 
 
-def run_ransac(data, max_iterations=60, random_seed=None):
+def run_ransac(data, max_iterations=65, random_seed=None):
     best_ic = 0
     best_model = None
     random.seed(random_seed)
@@ -120,7 +120,7 @@ def main(left_im_dir, test_left, test_right, calib_dir):
     X, Y = np.meshgrid(x, y)
 
     # ax + by +cz = d
-    Z = np.divide((d - a * X - b * Y),  c, where=c!=0)
+    Z = np.divide((d - a * X - b * Y),  c)
 
     plane = np.c_[X.flatten(), Y.flatten(), Z.flatten()]
 
@@ -134,9 +134,9 @@ def main(left_im_dir, test_left, test_right, calib_dir):
 
 if __name__ == "__main__":
     # dir
-    left_im_dir = "train/image_left/umm_000015.jpg"
-    right_im_dir = "train/image_right/umm_000015.jpg"
-    calib_dir = "train/calib/umm_000015.txt"
+    left_im_dir = "train/image_left/umm_000011.jpg"
+    right_im_dir = "train/image_right/umm_000011.jpg"
+    calib_dir = "train/calib/umm_000011.txt"
 
     # left image
     test_left = cv2.imread(left_im_dir)
