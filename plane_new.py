@@ -21,15 +21,15 @@ def get_plane(points):
     p1 = np.array(points[0])
     p2 = np.array(points[1])
     p3 = np.array(points[2])
-# These two vectors are in the plane
+=
     v1 = p3 - p1
     v2 = p2 - p1
 
-# the cross product is a vector normal to the plane
+# =is a vector normal to the plane
     cp = np.cross(v1, v2)
     a, b, c = cp
 
-# This evaluates a * x3 + b * y3 + c * z3 which equals d
+# a * x3 + b * y3 + c * z3 = d
     d = np.dot(cp, p3)
     return [a, b, c,d]
 
