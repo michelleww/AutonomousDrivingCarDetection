@@ -12,7 +12,7 @@ Move the downloaded data to the AutonomousDriving/ Folder
 ## Depth, disparity and 3D locations
   - disparity.py for computing filtered disparity
   - depth.py for computinng depth map using calibration information
-  - compute3D.py
+  - compute3d.py
 
 ## Road classifier
 
