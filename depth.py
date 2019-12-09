@@ -13,7 +13,9 @@ def compute_depth(calib_file, disparity):
         if line:
             points = line.split(' ')
             p[points[0].strip(':')] = points[1:]
-        
+ 
+    # read caliberation data
+    # use https://www.mrt.kit.edu/z/publ/download/2013/GeigerAl2013IJRR.pdf as reference for understanding the projection matrix
     f = float(p['P1'][0])
     T = -float(p['P1'][3])/f
     px = float(p['P1'][2])
@@ -36,7 +38,6 @@ if __name__ == "__main__":
 
     # gaussian blur
     disparity = sp.ndimage.gaussian_filter(disparity, sigma=2)
-
 
     calib_file_dir = 'train/calib/umm_000011.txt'
     f,T,px,py,depth = compute_depth(calib_file_dir, disparity)
